@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell -Command \"$content = Get-Content ''e:/dev/elia-worker/.dev.vars'' -Encoding Unicode; [System.IO.File]::WriteAllLines\\(''e:/dev/elia-worker/.dev.vars'', $content, [System.Text.UTF8Encoding]::new\\($false\\)\\)\")",
+      "Bash(powershell -Command \"$c = Get-Content ''e:/dev/elia-worker/.dev.vars'' -Encoding Unicode; $enc = New-Object System.Text.UTF8Encoding $false; [System.IO.File]::WriteAllLines\\(''e:/dev/elia-worker/.dev.vars'', $c, $enc\\)\")",
+      "Bash(powershell -File:*)",
+      "WebFetch(domain:platform.openai.com)",
+      "WebFetch(domain:openai.com)"
+    ]
+  }
+}
