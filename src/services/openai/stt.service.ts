@@ -1,5 +1,6 @@
 import { Env } from "../../types/env";
 import { config } from "../../config/env";
+import { buildSttPrompt } from "../prompts/english-tutor.prompt";
 
 const WHISPER_API = "https://api.openai.com/v1/audio/transcriptions";
 
@@ -36,13 +37,6 @@ function pcmToWav(pcm: ArrayBuffer): ArrayBuffer {
 	return buffer;
 }
 
-const STT_PROMPT =
-	"This is a spoken conversation between a language learner and an AI tutor. " +
-	"The speaker may switch languages or mix them. " +
-	"Transcribe exactly what is said, preserving natural speech including hesitations, " +
-	"incomplete sentences, and filler words. Do not correct grammar or translate. " +
-	"Use proper punctuation and capitalization.";
-
 export async function transcribeAudio(pcmBytes: ArrayBuffer, language: string, env: Env): Promise<string> {
 	const wav = pcmToWav(pcmBytes);
 	const blob = new Blob([wav], { type: "audio/wav" });
@@ -51,7 +45,7 @@ export async function transcribeAudio(pcmBytes: ArrayBuffer, language: string, e
 	form.append("file", blob, "audio.wav");
 	form.append("model", config.OPENAI_STT_MODEL);
 	form.append("language", language);
-	form.append("prompt", STT_PROMPT);
+	form.append("prompt", buildSttPrompt(language));
 
 	const response = await fetch(WHISPER_API, {
 		method: "POST",

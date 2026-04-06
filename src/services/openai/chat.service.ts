@@ -12,7 +12,8 @@ export async function tutorChat(
 ): Promise<LlmResponse> {
   const systemPrompt = buildTutorSystemPrompt(
     settings.agent_id,
-    settings.target_language
+    settings.target_language,
+    settings.native_language
   );
 
   const history = (settings.history ?? []).map((msg) => ({

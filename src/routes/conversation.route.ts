@@ -38,8 +38,8 @@ export async function handleConversation(request: Request, env: Env): Promise<Re
     return jsonError("'settings' is not valid JSON", 400);
   }
 
-  if (!settings.agent_id || !settings.target_language) {
-    return jsonError("'settings' must contain agent_id, target_language", 400);
+  if (!settings.agent_id || !settings.target_language || !settings.native_language) {
+    return jsonError("'settings' must contain agent_id, target_language, native_language", 400);
   }
 
   const pcmBytes = await audioFile.arrayBuffer();

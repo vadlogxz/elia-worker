@@ -31,7 +31,7 @@ export async function synthesizeSpeech(
         model: config.OPENAI_TTS_MODEL,
         input: text,
         voice,
-        response_format: "wav",
+        response_format: "mp3",
       }),
     });
   } catch {
@@ -45,9 +45,10 @@ export async function synthesizeSpeech(
 
 export function arrayBufferToBase64(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
+  const chunkSize = 8192;
   let binary = "";
-  for (let i = 0; i < bytes.byteLength; i++) {
-    binary += String.fromCharCode(bytes[i]);
+  for (let i = 0; i < bytes.byteLength; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
   }
   return btoa(binary);
 }
