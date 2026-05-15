@@ -1,0 +1,44 @@
+export type WordType = 'noun' | 'verb' | 'adjective' | 'adverb' | 'phrase' | 'other';
+export type CefrLevel = 'a1' | 'a2' | 'b1' | 'b2' | 'c1' | 'c2';
+export type Register = 'neutral' | 'formal' | 'informal' | 'colloquial';
+
+export interface NounData {
+	article: 'der' | 'die' | 'das';
+	plural: string;
+	genitive: string;
+}
+
+export interface VerbData {
+	auxiliary: 'haben' | 'sein';
+	partizip2: string;
+	isSeparable: boolean;
+	separablePrefix: string | null;
+	conjugation: { ich: string; du: string; er: string };
+	governs: 'Akkusativ' | 'Dativ' | 'Genitiv' | null;
+}
+
+export interface AdjectiveData {
+	comparative: string;
+	superlative: string;
+}
+
+export interface ExampleSentence {
+	de: string;
+	uk: string;
+}
+
+export interface WordEntry {
+	id: string;
+	word: string;
+	type: WordType;
+	level: CefrLevel;
+	register: Register;
+	translations: string[];
+	noun: NounData | null;
+	verb: VerbData | null;
+	adjective: AdjectiveData | null;
+	examples: ExampleSentence[];
+	mnemonic: string | null;
+	relatedWords: string[];
+	cachedAt: string;
+}
