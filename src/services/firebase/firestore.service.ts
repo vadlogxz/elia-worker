@@ -70,7 +70,12 @@ function pemToBuffer(pem: string): ArrayBuffer {
 
 async function fetchAccessToken(env: Env): Promise<string> {
 	const now = Math.floor(Date.now() / 1000);
-	if (tokenCache && tokenCache.exp > now + 60) return tokenCache.value;
+	if (tokenCache && tokenCache.exp > now + 60) {
+		console.log('[firestore] using cached access token');
+		return tokenCache.value;
+	}
+
+	console.log('[firestore] fetching new access token for', env.FIREBASE_CLIENT_EMAIL);
 
 	const enc = new TextEncoder();
 	const h = b64url(enc.encode(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).buffer as ArrayBuffer);
@@ -86,10 +91,15 @@ async function fetchAccessToken(env: Env): Promise<string> {
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`,
 	});
-	if (!res.ok) throw new Error(`OAuth token error: ${res.status}`);
+
+	if (!res.ok) {
+		const body = await res.text();
+		throw new Error(`OAuth token error ${res.status}: ${body}`);
+	}
 
 	const data = (await res.json()) as { access_token: string; expires_in: number };
 	tokenCache = { value: data.access_token, exp: now + data.expires_in };
+	console.log('[firestore] access token fetched, expires in', data.expires_in, 's');
 	return tokenCache.value;
 }
 
@@ -100,12 +110,18 @@ function docUrl(projectId: string, collection: string, docId: string): string {
 }
 
 export async function getDocument<T>(collection: string, docId: string, env: Env): Promise<T | null> {
+	const url = docUrl(env.FIREBASE_PROJECT_ID, collection, docId);
+	console.log('[firestore] GET', url);
+
 	const token = await fetchAccessToken(env);
-	const res = await fetch(docUrl(env.FIREBASE_PROJECT_ID, collection, docId), {
-		headers: { Authorization: `Bearer ${token}` },
-	});
+	const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+
+	console.log('[firestore] GET status:', res.status);
 	if (res.status === 404) return null;
-	if (!res.ok) throw new Error(`Firestore GET error: ${res.status}`);
+	if (!res.ok) {
+		const body = await res.text();
+		throw new Error(`Firestore GET error ${res.status}: ${body}`);
+	}
 
 	const doc = (await res.json()) as FsDocument;
 	const out: Record<string, unknown> = {};
@@ -114,14 +130,22 @@ export async function getDocument<T>(collection: string, docId: string, env: Env
 }
 
 export async function setDocument(collection: string, docId: string, data: object, env: Env): Promise<void> {
+	const url = docUrl(env.FIREBASE_PROJECT_ID, collection, docId);
+	console.log('[firestore] PATCH', url);
+
 	const token = await fetchAccessToken(env);
 	const fields: Record<string, FsValue> = {};
 	for (const [k, v] of Object.entries(data)) fields[k] = toFsValue(v);
 
-	const res = await fetch(docUrl(env.FIREBASE_PROJECT_ID, collection, docId), {
+	const res = await fetch(url, {
 		method: 'PATCH',
 		headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
 		body: JSON.stringify({ fields }),
 	});
-	if (!res.ok) throw new Error(`Firestore PATCH error: ${res.status}`);
+
+	console.log('[firestore] PATCH status:', res.status);
+	if (!res.ok) {
+		const body = await res.text();
+		throw new Error(`Firestore PATCH error ${res.status}: ${body}`);
+	}
 }
